@@ -195,7 +195,7 @@ function App() {
     commit({
       ...state,
       accepted: true,
-      email: String(form.get('email') || selectedUser.email),
+      email: selectedUser.email,
       trialStartedAt: new Date().toISOString(),
     })
   }
@@ -239,12 +239,16 @@ function App() {
 
   if (!state.accepted) {
     return (
-      <main className="grid min-h-dvh place-items-center bg-black px-5 py-8 text-white">
+      <main className="grid min-h-dvh justify-items-center bg-black px-5 pb-8 pt-[calc(env(safe-area-inset-top)+80px)] text-white">
         <section className="w-full max-w-[560px] space-y-7">
           <div className="space-y-4">
             <div className="h-11 w-11 border border-white bg-[repeating-linear-gradient(180deg,transparent_0_10px,rgba(255,255,255,.25)_11px,transparent_12px)]" />
-            <h1 className="font-serif text-[clamp(1.9rem,9vw,3rem)] leading-tight">
-              AIに日記を貼ったあと、誰にも読まれていない感じだけが残る夜へ。
+            <h1 className="font-serif text-[clamp(1.35rem,6.5vw,2.3rem)] leading-[1.45]">
+              AIに日記を貼ったあと、
+              <br />
+              誰にも読まれていない
+              <br />
+              感じだけが残る夜へ。
             </h1>
             <p className="max-w-[44ch] text-sm leading-7 text-zinc-400">
               7日間だけ、匿名の一人と日記を交換します。返信、評価、プロフィールはありません。
@@ -252,15 +256,6 @@ function App() {
           </div>
 
           <form className="space-y-4" onSubmit={startTrial}>
-            <input
-              className="h-12 w-full rounded-full border border-zinc-800 bg-zinc-950 px-4 text-sm outline-none focus:border-white"
-              name="email"
-              type="email"
-              autoComplete="email"
-              defaultValue={selectedUser.email}
-              aria-label="メールアドレス"
-            />
-
             <div className="grid gap-3 text-sm text-zinc-400">
               <label className="grid grid-cols-[20px_1fr] gap-3">
                 <input className="mt-1 accent-white" name="age" type="checkbox" />
@@ -349,11 +344,7 @@ function App() {
           ))}
         </div>
 
-        {todayEntry ? (
-          <div className="border-t border-zinc-900 px-4 py-4 pb-[calc(env(safe-area-inset-bottom)+16px)] text-center text-sm text-zinc-500">
-            今日は投稿済みです。
-          </div>
-        ) : (
+        {todayEntry ? null : (
           <form
             className="grid grid-cols-[1fr_auto] items-end gap-2 border-t border-zinc-900 px-3 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)]"
             onSubmit={submitEntry}
@@ -446,7 +437,7 @@ function SettingsSheet({
 }) {
   return (
     <div className="fixed inset-0 z-20 grid place-items-end bg-black/70 px-3 py-3">
-      <section className="w-full max-w-[560px] rounded-3xl border border-zinc-800 bg-zinc-950 text-white shadow-2xl">
+      <section className="max-h-[calc(100dvh-24px)] w-full max-w-[560px] overflow-y-auto rounded-3xl border border-zinc-800 bg-zinc-950 text-white shadow-2xl">
         <header className="flex items-center justify-between border-b border-zinc-800 px-5 py-4">
           <h2 className="text-base font-medium">設定</h2>
           <button aria-label="閉じる" className="text-zinc-400" onClick={onClose} type="button">
@@ -454,7 +445,7 @@ function SettingsSheet({
           </button>
         </header>
 
-        <div className="space-y-6 px-5 py-5">
+        <div className="space-y-4 px-5 py-5">
           <section className="space-y-2 text-sm text-zinc-400">
             <div className="flex justify-between gap-4">
               <span>現在</span>
@@ -473,7 +464,7 @@ function SettingsSheet({
             </p>
           </section>
 
-          <section className="space-y-3">
+          <section className="space-y-2">
             <div className="text-xs text-zinc-500">テストユーザー</div>
             <div className="grid gap-2">
               {testUsers.map((user) => (
@@ -494,19 +485,19 @@ function SettingsSheet({
             </div>
           </section>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {!paid ? (
-              <button className="h-11 rounded-full bg-white px-5 text-sm font-semibold text-black" onClick={onPay} type="button">
-                月{MONTHLY_PRICE}円で続ける
+              <button className="h-10 rounded-full bg-white px-3 text-xs font-semibold text-black" onClick={onPay} type="button">
+                続ける
               </button>
             ) : null}
-            <button className="h-11 rounded-full border border-zinc-700 px-5 text-sm" onClick={onEnd} type="button">
+            <button className="h-10 rounded-full border border-zinc-700 px-3 text-xs" onClick={onEnd} type="button">
               交換を終了
             </button>
-            <button className="h-11 rounded-full border border-zinc-700 px-5 text-sm" onClick={onInterrupt} type="button">
+            <button className="h-10 rounded-full border border-zinc-700 px-3 text-xs" onClick={onInterrupt} type="button">
               中断
             </button>
-            <button className="h-11 rounded-full border border-zinc-700 px-4 text-sm" onClick={onReset} type="button">
+            <button className="h-10 rounded-full border border-zinc-700 px-3 text-xs" onClick={onReset} type="button">
               <span className="inline-flex items-center gap-2">
                 <RotateCcw size={15} />
                 リセット
