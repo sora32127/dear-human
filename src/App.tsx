@@ -525,13 +525,11 @@ function App() {
                 aria-label={t.todayDiary}
                 className="min-h-[168px] w-full resize-y bg-transparent px-1 text-sm leading-7 text-zinc-50 outline-none placeholder:text-zinc-600 sm:min-h-[220px] sm:text-base"
                 id="today-diary"
-                maxLength={2200}
                 onChange={(event) => setDraft(event.target.value)}
                 placeholder={selectedUser.prompt[language]}
                 value={draft}
               />
               <div className="grid gap-1 px-1 text-xs text-zinc-600 sm:flex sm:items-center sm:justify-between sm:gap-3">
-                <span>{draft.length} / 2200</span>
                 <span>{t.composerHint}</span>
               </div>
             </div>

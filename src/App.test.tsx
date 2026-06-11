@@ -33,6 +33,7 @@ describe('Dear Human MVP', () => {
       ),
     ).toBeInTheDocument()
     expect(screen.getByText('24時間に1回。送ると相手の日記を読めます')).toBeInTheDocument()
+    expect(screen.getByLabelText('今日の日記')).not.toHaveAttribute('maxlength')
     expect(screen.getByText('あなたが送ると読めます')).toBeInTheDocument()
     expect(screen.getByText(/^相手 [A-Z2-9]{5}$/)).toBeInTheDocument()
     expect(screen.getByText(/今日は、誰かに言うほどではないことばかり/)).toHaveAttribute('aria-hidden', 'true')
