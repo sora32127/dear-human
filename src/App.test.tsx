@@ -23,8 +23,8 @@ describe('Dear Human MVP', () => {
   it('locks the partner diary until the user posts', async () => {
     const user = await startTrial()
 
-    expect(screen.getByText('あなたが送ると開きます。')).toBeInTheDocument()
-    expect(screen.queryByText(/今日は、誰かに言うほどではないことばかり/)).not.toBeInTheDocument()
+    expect(screen.getByText('あなたが送ると開きます')).toBeInTheDocument()
+    expect(screen.getByText(/今日は、誰かに言うほどではないことばかり/)).toHaveAttribute('aria-hidden', 'true')
 
     await user.type(
       screen.getByLabelText('今日の日記'),

@@ -156,7 +156,7 @@ function App() {
         id: 'partner-locked',
         actor: 'partner',
         label: selectedUser.partnerLabel,
-        text: 'あなたが送ると開きます。',
+        text: selectedUser.partnerEntries[(currentDay - 1) % selectedUser.partnerEntries.length],
         locked: true,
       })
       return items
@@ -338,7 +338,7 @@ function App() {
           </button>
         </header>
 
-        <div className="min-h-0 space-y-4 overflow-y-auto px-3 py-5 sm:px-5">
+        <div className={`min-h-0 space-y-4 overflow-y-auto px-3 py-5 sm:px-5 ${todayEntry ? '' : 'pb-64 sm:pb-72'}`}>
           {messages.map((message) => (
             <MessageBubble key={message.id} message={message} />
           ))}
@@ -346,17 +346,27 @@ function App() {
 
         {todayEntry ? null : (
           <form
-            className="grid grid-cols-[1fr_auto] items-end gap-2 border-t border-zinc-900 px-3 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)]"
+            className="grid gap-3 border-t border-zinc-900 bg-black px-3 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)] sm:px-5"
             onSubmit={submitEntry}
           >
-            <textarea
-              aria-label="今日の日記"
-              className="max-h-[180px] min-h-12 resize-y rounded-3xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm leading-6 outline-none focus:border-white"
-              maxLength={1600}
-              onChange={(event) => setDraft(event.target.value)}
-              placeholder={selectedUser.prompt}
-              value={draft}
-            />
+            <div className="grid gap-2 rounded-3xl border border-zinc-800 bg-zinc-950 p-3 focus-within:border-white">
+              <label className="px-1 text-xs text-zinc-500" htmlFor="today-diary">
+                今日の日記
+              </label>
+              <textarea
+                aria-label="今日の日記"
+                className="min-h-[168px] w-full resize-y bg-transparent px-1 text-sm leading-7 text-zinc-50 outline-none placeholder:text-zinc-600 sm:min-h-[220px] sm:text-base"
+                id="today-diary"
+                maxLength={2200}
+                onChange={(event) => setDraft(event.target.value)}
+                placeholder={selectedUser.prompt}
+                value={draft}
+              />
+              <div className="flex items-center justify-between gap-3 px-1 text-xs text-zinc-600">
+                <span>{draft.length} / 2200</span>
+                <span>送ると相手の日記が開きます</span>
+              </div>
+            </div>
             <button
               className="h-12 rounded-full bg-white px-5 text-sm font-semibold text-black disabled:bg-zinc-800 disabled:text-zinc-500"
               disabled={draft.trim().length < 20}
@@ -396,6 +406,23 @@ function MessageBubble({ message }: { message: ThreadMessage }) {
   }
 
   const mine = message.actor === 'self'
+
+  if (message.locked) {
+    return (
+      <article className="mr-auto grid max-w-[90%] gap-1">
+        <div className="px-2 text-xs text-zinc-500">{message.label}</div>
+        <div className="relative h-36 overflow-hidden rounded-3xl border border-dashed border-zinc-800 bg-zinc-950 px-4 py-3 sm:h-44">
+          <div aria-hidden="true" className="pointer-events-none select-none whitespace-pre-wrap break-words text-sm leading-7 text-zinc-400 blur-[5px] sm:text-base">
+            {message.text}
+          </div>
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,.05)_1px,transparent_1px),linear-gradient(180deg,rgba(255,255,255,.05)_1px,transparent_1px)] bg-[size:10px_10px]" />
+          <div className="absolute inset-0 grid place-items-center bg-black/58 px-4 text-center text-xs leading-6 text-zinc-300">
+            あなたが送ると開きます
+          </div>
+        </div>
+      </article>
+    )
+  }
 
   return (
     <article className={`grid max-w-[90%] gap-1 ${mine ? 'ml-auto justify-items-end' : 'mr-auto'}`}>
