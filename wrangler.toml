@@ -1,3 +1,8 @@
 name = "dear-human"
 compatibility_date = "2026-06-11"
-pages_build_output_dir = "dist"
+pages_build_output_dir = "./dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "dear-human-prod"
+database_id = "b55bb9d3-b454-41a0-a269-9ccac2287523"
