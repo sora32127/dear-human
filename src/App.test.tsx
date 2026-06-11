@@ -24,8 +24,8 @@ describe('Dear Human MVP', () => {
     const user = await startTrial()
 
     expect(screen.getByText('24時間に1回だけ投稿できます。自分が投稿すると、相手の日記が読めます。')).toBeInTheDocument()
-    expect(screen.getByText('24時間に1回。送ると相手の日記が開きます')).toBeInTheDocument()
-    expect(screen.getByText('あなたが送ると開きます')).toBeInTheDocument()
+    expect(screen.getByText('24時間に1回。送ると相手の日記を読めます')).toBeInTheDocument()
+    expect(screen.getByText('あなたが送ると読めます')).toBeInTheDocument()
     expect(screen.getByText(/今日は、誰かに言うほどではないことばかり/)).toHaveAttribute('aria-hidden', 'true')
 
     await user.type(

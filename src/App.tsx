@@ -370,7 +370,7 @@ function App() {
               />
               <div className="grid gap-1 px-1 text-xs text-zinc-600 sm:flex sm:items-center sm:justify-between sm:gap-3">
                 <span>{draft.length} / 2200</span>
-                <span>24時間に1回。送ると相手の日記が開きます</span>
+                <span>24時間に1回。送ると相手の日記を読めます</span>
               </div>
             </div>
             <button
@@ -423,7 +423,7 @@ function MessageBubble({ message }: { message: ThreadMessage }) {
           </div>
           <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,.05)_1px,transparent_1px),linear-gradient(180deg,rgba(255,255,255,.05)_1px,transparent_1px)] bg-[size:10px_10px]" />
           <div className="absolute inset-0 grid place-items-center bg-black/58 px-4 text-center text-xs leading-6 text-zinc-300">
-            あなたが送ると開きます
+            あなたが送ると読めます
           </div>
         </div>
       </article>
