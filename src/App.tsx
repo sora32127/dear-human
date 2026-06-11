@@ -50,16 +50,7 @@ const copy = {
     appName: 'Dear Human',
     catchphrase: 'AIではなく人間と日記を交換しよう',
     serviceDescription:
-      'Dear Humanは、7日間だけ、匿名の一人と日記を交換します。返信、評価、プロフィールはありません。参加者は言語で分けず共通プールに入り、待っている人がいれば即時にランダムマッチします。',
-    poolTitle: '共通プールで、すぐ相手を探す',
-    poolCaption:
-      '相手がいなければ待機。待っている人がいれば、その場で7日間の交換が始まります。',
-    poolLabel: '共通プール',
-    poolWaiting: '待機中',
-    poolMatched: '即時マッチ',
-    poolWeek: '7日間',
-    poolNoLanguageSplit: '言語で分けない',
-    poolAnimationLabel: '共通プールのマッチング説明',
+      'Dear Humanは、7日間だけ、匿名の一人と日記を交換します。返信、評価、プロフィールはありません。',
     ageCheck: '18歳以上です。',
     safetyCheck: '医療、カウンセリング、危機対応ではないことを理解しました。',
     priceCheck:
@@ -103,16 +94,7 @@ const copy = {
     appName: 'Dear Human',
     catchphrase: 'Exchange diaries with a human, not AI',
     serviceDescription:
-      'Dear Human lets you exchange diaries with one anonymous person for 7 days. There are no replies, ratings, or profiles. Everyone enters one shared pool, without language separation, and is matched at random immediately if someone is waiting.',
-    poolTitle: 'One shared pool, matched as soon as possible',
-    poolCaption:
-      'If nobody is waiting, you enter the pool. If someone is waiting, a 7-day exchange starts immediately.',
-    poolLabel: 'Shared pool',
-    poolWaiting: 'Waiting',
-    poolMatched: 'Instant match',
-    poolWeek: '7 days',
-    poolNoLanguageSplit: 'No language split',
-    poolAnimationLabel: 'Shared pool matching explanation',
+      'Dear Human lets you exchange diaries with one anonymous person for 7 days. There are no replies, ratings, or profiles.',
     ageCheck: 'I am 18 or older.',
     safetyCheck: 'I understand this is not medical care, counseling, or crisis support.',
     priceCheck:
@@ -445,7 +427,6 @@ function App() {
             <p className="max-w-[48ch] text-sm leading-7 text-zinc-400">
               {t.serviceDescription}
             </p>
-            <MatchingPoolAnimation t={t} />
           </div>
 
           <form className="space-y-4" onSubmit={startTrial}>
@@ -581,50 +562,6 @@ function App() {
         />
       ) : null}
     </main>
-  )
-}
-
-function MatchingPoolAnimation({ t }: { t: typeof copy[Language] }) {
-  return (
-    <figure
-      aria-label={t.poolAnimationLabel}
-      className="matching-pool relative overflow-hidden rounded-[28px] border border-zinc-800 bg-zinc-950 px-4 py-4"
-    >
-      <figcaption className="space-y-1">
-        <div className="text-sm font-medium text-zinc-100">{t.poolTitle}</div>
-        <p className="text-xs leading-6 text-zinc-500">{t.poolCaption}</p>
-      </figcaption>
-
-      <div className="relative mt-4 h-[172px] overflow-hidden rounded-[22px] border border-zinc-900 bg-black">
-        <div className="absolute left-4 top-4 rounded-full border border-zinc-800 px-3 py-1 text-[11px] text-zinc-500">
-          {t.poolLabel}
-        </div>
-        <div className="absolute right-4 top-4 rounded-full border border-zinc-800 px-3 py-1 text-[11px] text-zinc-500">
-          {t.poolNoLanguageSplit}
-        </div>
-
-        <div className="absolute inset-x-7 top-[70px] h-px bg-zinc-900" />
-        <div className="pool-ring absolute left-1/2 top-[54px] h-24 w-24 -translate-x-1/2 rounded-full border border-dashed border-zinc-700" />
-        <div className="pool-join absolute left-1/2 top-[103px] h-px w-[74px] -translate-x-1/2 bg-white/70" />
-
-        <div className="pool-person pool-person-a absolute left-1/2 top-[82px] grid h-11 w-11 -translate-x-1/2 place-items-center rounded-full border border-white bg-black text-[11px] font-medium text-white">
-          JP
-        </div>
-        <div className="pool-person pool-person-b absolute left-1/2 top-[82px] grid h-11 w-11 -translate-x-1/2 place-items-center rounded-full border border-zinc-400 bg-black text-[11px] font-medium text-zinc-200">
-          EN
-        </div>
-
-        <div className="pool-waiting absolute bottom-4 left-4 rounded-full border border-zinc-800 px-3 py-1 text-[11px] text-zinc-500">
-          {t.poolWaiting}
-        </div>
-        <div className="pool-matched absolute bottom-4 left-4 rounded-full border border-white px-3 py-1 text-[11px] text-white">
-          {t.poolMatched}
-        </div>
-        <div className="absolute bottom-4 right-4 rounded-full bg-white px-3 py-1 text-[11px] font-semibold text-black">
-          {t.poolWeek}
-        </div>
-      </div>
-    </figure>
   )
 }
 

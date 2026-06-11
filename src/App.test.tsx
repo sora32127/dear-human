@@ -71,24 +71,22 @@ describe('Dear Human MVP', () => {
     expect(screen.getByText('AIではなく人間と日記を交換しよう')).toBeInTheDocument()
     expect(
       screen.getByText(
-        'Dear Humanは、7日間だけ、匿名の一人と日記を交換します。返信、評価、プロフィールはありません。参加者は言語で分けず共通プールに入り、待っている人がいれば即時にランダムマッチします。',
+        'Dear Humanは、7日間だけ、匿名の一人と日記を交換します。返信、評価、プロフィールはありません。',
       ),
     ).toBeInTheDocument()
-    expect(screen.getByLabelText('共通プールのマッチング説明')).toBeInTheDocument()
-    expect(screen.getByText('共通プールで、すぐ相手を探す')).toBeInTheDocument()
-    expect(screen.getByText('言語で分けない')).toBeInTheDocument()
+    expect(screen.queryByText('共通プール')).not.toBeInTheDocument()
+    expect(screen.queryByText('即時マッチ')).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'English' }))
 
     expect(screen.getByText('Exchange diaries with a human, not AI')).toBeInTheDocument()
     expect(
       screen.getByText(
-        'Dear Human lets you exchange diaries with one anonymous person for 7 days. There are no replies, ratings, or profiles. Everyone enters one shared pool, without language separation, and is matched at random immediately if someone is waiting.',
+        'Dear Human lets you exchange diaries with one anonymous person for 7 days. There are no replies, ratings, or profiles.',
       ),
     ).toBeInTheDocument()
-    expect(screen.getByLabelText('Shared pool matching explanation')).toBeInTheDocument()
-    expect(screen.getByText('One shared pool, matched as soon as possible')).toBeInTheDocument()
-    expect(screen.getByText('No language split')).toBeInTheDocument()
+    expect(screen.queryByText('Shared pool')).not.toBeInTheDocument()
+    expect(screen.queryByText('Instant match')).not.toBeInTheDocument()
 
     await user.click(screen.getByLabelText('I am 18 or older.'))
     await user.click(
