@@ -139,7 +139,7 @@ function App() {
       {
         id: 'system-intro',
         actor: 'system',
-        text: '自分が今日の日記を送るまで、相手の日記は開きません。',
+        text: '24時間に1回だけ投稿できます。自分が投稿すると、相手の日記が読めます。',
       },
     ]
 
@@ -161,6 +161,12 @@ function App() {
       })
       return items
     }
+
+    items.push({
+      id: 'system-posted',
+      actor: 'system',
+      text: '投稿が終わりました。今日はもう投稿できません。',
+    })
 
     items.push({
       id: 'self-today',
@@ -362,9 +368,9 @@ function App() {
                 placeholder={selectedUser.prompt}
                 value={draft}
               />
-              <div className="flex items-center justify-between gap-3 px-1 text-xs text-zinc-600">
+              <div className="grid gap-1 px-1 text-xs text-zinc-600 sm:flex sm:items-center sm:justify-between sm:gap-3">
                 <span>{draft.length} / 2200</span>
-                <span>送ると相手の日記が開きます</span>
+                <span>24時間に1回。送ると相手の日記が開きます</span>
               </div>
             </div>
             <button

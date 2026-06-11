@@ -23,6 +23,8 @@ describe('Dear Human MVP', () => {
   it('locks the partner diary until the user posts', async () => {
     const user = await startTrial()
 
+    expect(screen.getByText('24時間に1回だけ投稿できます。自分が投稿すると、相手の日記が読めます。')).toBeInTheDocument()
+    expect(screen.getByText('24時間に1回。送ると相手の日記が開きます')).toBeInTheDocument()
     expect(screen.getByText('あなたが送ると開きます')).toBeInTheDocument()
     expect(screen.getByText(/今日は、誰かに言うほどではないことばかり/)).toHaveAttribute('aria-hidden', 'true')
 
@@ -34,6 +36,7 @@ describe('Dear Human MVP', () => {
 
     expect(screen.getByText('あなた')).toBeInTheDocument()
     expect(screen.getByText('相手')).toBeInTheDocument()
+    expect(screen.getByText('投稿が終わりました。今日はもう投稿できません。')).toBeInTheDocument()
     expect(screen.getByText(/今日は、誰かに言うほどではないことばかり/)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '読む' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '通報' })).not.toBeInTheDocument()
