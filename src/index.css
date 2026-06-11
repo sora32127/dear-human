@@ -27,3 +27,172 @@ input,
 textarea {
   font: inherit;
 }
+
+.matching-pool {
+  contain: content;
+}
+
+.pool-person,
+.pool-ring,
+.pool-join,
+.pool-waiting,
+.pool-matched {
+  animation-duration: 7s;
+  animation-iteration-count: infinite;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, opacity;
+}
+
+.pool-person-a {
+  animation-name: pool-person-a;
+}
+
+.pool-person-b {
+  animation-name: pool-person-b;
+}
+
+.pool-ring {
+  animation-name: pool-ring;
+}
+
+.pool-join {
+  animation-name: pool-join;
+  transform-origin: center;
+}
+
+.pool-waiting {
+  animation-name: pool-waiting;
+}
+
+.pool-matched {
+  animation-name: pool-matched;
+}
+
+@keyframes pool-person-a {
+  0%,
+  8% {
+    opacity: 0;
+    transform: translateX(-148px) translateY(-5px);
+  }
+
+  20%,
+  48% {
+    opacity: 1;
+    transform: translateX(-62px) translateY(-5px);
+  }
+
+  62%,
+  100% {
+    opacity: 1;
+    transform: translateX(-32px) translateY(0);
+  }
+}
+
+@keyframes pool-person-b {
+  0%,
+  38% {
+    opacity: 0;
+    transform: translateX(148px) translateY(-5px);
+  }
+
+  52% {
+    opacity: 1;
+    transform: translateX(62px) translateY(-5px);
+  }
+
+  66%,
+  100% {
+    opacity: 1;
+    transform: translateX(32px) translateY(0);
+  }
+}
+
+@keyframes pool-ring {
+  0%,
+  52% {
+    opacity: 0.55;
+    transform: translateX(-50%) scale(1);
+  }
+
+  66%,
+  100% {
+    opacity: 0.16;
+    transform: translateX(-50%) scale(1.18);
+  }
+}
+
+@keyframes pool-join {
+  0%,
+  58% {
+    opacity: 0;
+    transform: translateX(-50%) scaleX(0.18);
+  }
+
+  70%,
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) scaleX(1);
+  }
+}
+
+@keyframes pool-waiting {
+  0%,
+  52% {
+    opacity: 1;
+  }
+
+  62%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes pool-matched {
+  0%,
+  56% {
+    opacity: 0;
+  }
+
+  66%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pool-person,
+  .pool-ring,
+  .pool-join,
+  .pool-waiting,
+  .pool-matched {
+    animation: none;
+  }
+
+  .pool-person-a {
+    opacity: 1;
+    transform: translateX(-32px) translateY(0);
+  }
+
+  .pool-person-b {
+    opacity: 1;
+    transform: translateX(32px) translateY(0);
+  }
+
+  .pool-ring {
+    opacity: 0.16;
+    transform: translateX(-50%) scale(1.18);
+  }
+
+  .pool-join {
+    opacity: 1;
+    transform: translateX(-50%) scaleX(1);
+  }
+
+  .pool-waiting {
+    opacity: 0;
+  }
+
+  .pool-matched {
+    opacity: 1;
+  }
+}
