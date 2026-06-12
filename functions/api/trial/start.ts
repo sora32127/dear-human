@@ -17,7 +17,17 @@ type StartTrialRequest = {
 }
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
-  const { user } = await requireSession(request, env)
+  let session
+  try {
+    session = await requireSession(request, env)
+  } catch (error) {
+    if (error instanceof Response && error.status === 401) {
+      return json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    throw error
+  }
+
+  const { user } = session
   const body = await readJson<StartTrialRequest>(request)
   if (!body.age || !body.safety || !body.price) {
     return json({ error: 'Required confirmations are missing' }, { status: 400 })

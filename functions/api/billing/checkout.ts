@@ -11,7 +11,17 @@ type StripeCheckoutSession = {
 }
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
-  const { user } = await requireSession(request, env)
+  let authSession
+  try {
+    authSession = await requireSession(request, env)
+  } catch (error) {
+    if (error instanceof Response && error.status === 401) {
+      return json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    throw error
+  }
+
+  const { user } = authSession
   if (!env.STRIPE_SECRET_KEY || !env.STRIPE_PRICE_ID) {
     return json({ error: 'Stripe is not configured' }, { status: 500 })
   }

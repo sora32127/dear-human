@@ -6,12 +6,32 @@ type EntryRequest = {
 }
 
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
-  const { user } = await requireSession(request, env)
+  let session
+  try {
+    session = await requireSession(request, env)
+  } catch (error) {
+    if (error instanceof Response && error.status === 401) {
+      return json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    throw error
+  }
+
+  const { user } = session
   return json({ authenticated: true, ...(await buildSessionPayload(env, user)) })
 }
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
-  const { user } = await requireSession(request, env)
+  let session
+  try {
+    session = await requireSession(request, env)
+  } catch (error) {
+    if (error instanceof Response && error.status === 401) {
+      return json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    throw error
+  }
+
+  const { user } = session
   const pair = await getActivePair(env, user.id)
   if (!pair) return json({ error: 'No active exchange' }, { status: 409 })
 
@@ -32,4 +52,3 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
   return json({ authenticated: true, ...(await buildSessionPayload(env, user)) })
 }
-
