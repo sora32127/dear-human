@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import App from './App'
 
 async function startTrial() {
@@ -22,6 +22,11 @@ async function startTrial() {
 describe('Dear Human MVP', () => {
   beforeEach(() => {
     window.localStorage.clear()
+    window.history.pushState({}, '', '/')
+  })
+
+  afterEach(() => {
+    window.history.pushState({}, '', '/')
   })
 
   it('locks the partner diary until the user posts', async () => {
@@ -74,8 +79,16 @@ describe('Dear Human MVP', () => {
         'Dear Humanは、7日間だけ、匿名の一人と日記を交換します。返信、評価、プロフィールはありません。',
       ),
     ).toBeInTheDocument()
-    expect(screen.queryByText('共通プール')).not.toBeInTheDocument()
-    expect(screen.queryByText('即時マッチ')).not.toBeInTheDocument()
+    expect(screen.getByText('7日間の流れ')).toBeInTheDocument()
+    expect(screen.getByText('まだ待っている人がいない')).toBeInTheDocument()
+    expect(screen.queryByText('JA')).not.toBeInTheDocument()
+    expect(screen.queryByText('EN')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '利用規約' })).toHaveAttribute('href', '/legal/terms')
+    expect(screen.getByRole('link', { name: 'プライバシーポリシー' })).toHaveAttribute('href', '/legal/privacy')
+    expect(screen.getByRole('link', { name: '特定商取引法に基づく表記' })).toHaveAttribute(
+      'href',
+      '/legal/tokushoho',
+    )
 
     await user.click(screen.getByRole('button', { name: 'English' }))
 
@@ -85,8 +98,8 @@ describe('Dear Human MVP', () => {
         'Dear Human lets you exchange diaries with one anonymous person for 7 days. There are no replies, ratings, or profiles.',
       ),
     ).toBeInTheDocument()
-    expect(screen.queryByText('Shared pool')).not.toBeInTheDocument()
-    expect(screen.queryByText('Instant match')).not.toBeInTheDocument()
+    expect(screen.getByText('How the 7 days work')).toBeInTheDocument()
+    expect(screen.getByText('No one is waiting yet')).toBeInTheDocument()
 
     await user.click(screen.getByLabelText('I am 18 or older.'))
     await user.click(
@@ -105,5 +118,43 @@ describe('Dear Human MVP', () => {
       ),
     ).toBeInTheDocument()
     expect(screen.getByText(/^Partner [A-Z2-9]{5}$/)).toBeInTheDocument()
+  })
+
+  it('shows the matching algorithm lab on a separate route', async () => {
+    const user = userEvent.setup()
+    window.history.pushState({}, '', '/algorithm')
+    render(<App />)
+
+    expect(screen.getByText('マッチング検証')).toBeInTheDocument()
+    expect(screen.getAllByText('まだ待っている人がいない').length).toBeGreaterThan(0)
+    expect(screen.getByText('誰かが来るまで待つ')).toBeInTheDocument()
+    expect(screen.queryByText('検証メモ')).not.toBeInTheDocument()
+    expect(screen.queryByText('waiting_pool: empty')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '次へ' }))
+
+    expect(screen.getAllByText('最初の人が待つ').length).toBeGreaterThan(0)
+  })
+
+  it('renders legal and billing support pages', () => {
+    window.history.pushState({}, '', '/legal/tokushoho')
+    const { unmount } = render(<App />)
+
+    expect(screen.getByText('特定商取引法に基づく表記')).toBeInTheDocument()
+    expect(screen.getByText('月額500円（税込）')).toBeInTheDocument()
+    expect(screen.getAllByText('未設定').length).toBeGreaterThan(0)
+
+    unmount()
+    window.history.pushState({}, '', '/legal/privacy')
+    const privacy = render(<App />)
+
+    expect(screen.getByText('プライバシーポリシー')).toBeInTheDocument()
+    expect(screen.getByText('Cloudflare: ホスティング、データベース、セキュリティ')).toBeInTheDocument()
+
+    privacy.unmount()
+    window.history.pushState({}, '', '/billing/success')
+    render(<App />)
+
+    expect(screen.getByText('決済が完了しました')).toBeInTheDocument()
   })
 })

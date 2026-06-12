@@ -9,6 +9,8 @@ import {
   signInWithGoogle,
   startRemoteTrial,
 } from './api'
+import AlgorithmLab, { MatchingFlowPreview } from './AlgorithmLab'
+import { BillingResultPage, LegalPage } from './LegalPages'
 import type { RemoteSession } from './api'
 
 const STORAGE_KEY = 'dear-human-state-v2'
@@ -354,6 +356,36 @@ function mergeRemoteState(current: AppState, next: RemoteSession): AppState | nu
 }
 
 function App() {
+  const pathname = window.location.pathname
+
+  if (pathname === '/algorithm') {
+    return <AlgorithmLab />
+  }
+
+  if (pathname === '/legal/tokushoho') {
+    return <LegalPage kind="tokushoho" />
+  }
+
+  if (pathname === '/legal/privacy') {
+    return <LegalPage kind="privacy" />
+  }
+
+  if (pathname === '/legal/terms') {
+    return <LegalPage kind="terms" />
+  }
+
+  if (pathname === '/billing/success') {
+    return <BillingResultPage kind="success" />
+  }
+
+  if (pathname === '/billing/cancel') {
+    return <BillingResultPage kind="cancel" />
+  }
+
+  return <DiaryApp />
+}
+
+function DiaryApp() {
   const [state, setState] = useState<AppState>(loadState)
   const [draft, setDraft] = useState('')
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -681,6 +713,7 @@ function App() {
             <p className="max-w-[48ch] text-sm leading-7 text-zinc-400">
               {t.serviceDescription}
             </p>
+            <MatchingFlowPreview compact language={language} />
             {backendEnabled ? (
               <div className="grid gap-3 rounded-3xl border border-zinc-800 bg-zinc-950 p-4">
                 {remoteSession?.authenticated && remoteSession.user ? (
@@ -723,6 +756,7 @@ function App() {
               {t.startTrial}
             </button>
           </form>
+          <LegalLinks />
         </section>
       </main>
     )
@@ -864,6 +898,22 @@ function App() {
         />
       ) : null}
     </main>
+  )
+}
+
+function LegalLinks() {
+  return (
+    <nav className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-zinc-600" aria-label="法務リンク">
+      <a className="transition-colors hover:text-zinc-300" href="/legal/terms">
+        利用規約
+      </a>
+      <a className="transition-colors hover:text-zinc-300" href="/legal/privacy">
+        プライバシーポリシー
+      </a>
+      <a className="transition-colors hover:text-zinc-300" href="/legal/tokushoho">
+        特定商取引法に基づく表記
+      </a>
+    </nav>
   )
 }
 
