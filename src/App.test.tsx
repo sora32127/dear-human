@@ -142,7 +142,10 @@ describe('Dear Human MVP', () => {
 
     expect(screen.getByText('特定商取引法に基づく表記')).toBeInTheDocument()
     expect(screen.getByText('月額500円（税込）')).toBeInTheDocument()
-    expect(screen.getAllByText('未設定').length).toBeGreaterThan(0)
+    expect(screen.getByText('上村空知')).toBeInTheDocument()
+    expect(screen.getByText('sora32127@gmail.com')).toBeInTheDocument()
+    expect(screen.getAllByText('請求があったら遅滞なく開示します').length).toBeGreaterThan(0)
+    expect(screen.queryByText('未設定')).not.toBeInTheDocument()
 
     unmount()
     window.history.pushState({}, '', '/legal/privacy')

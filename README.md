@@ -47,15 +47,18 @@ Cloudflare Pages custom domain setup is done from the Cloudflare dashboard:
 
 After the custom domain is active, configure OAuth and Stripe URLs with `https://dear-human.net`.
 
-## Legal Launch Checklist
+## Legal Launch Notes
 
-Before enabling Stripe live billing, fill the placeholders in `src/LegalPages.tsx`:
+The commerce disclosure in `src/LegalPages.tsx` follows the concise format used by:
 
-- 販売事業者
-- 運営責任者
-- 所在地
-- 電話番号
-- 有効な問い合わせメールアドレス
+- `https://healthy-person-emulator.org/commerceDisclosure`
+
+Current disclosed values:
+
+- 販売業者の名称・サイト管理代表者: 上村空知
+- 所在地: 請求があったら遅滞なく開示します
+- 電話番号: 請求があったら遅滞なく開示します
+- メールアドレス: `sora32127@gmail.com`
 
 The current MVP says the 7-day trial does not require a credit card and does not automatically charge. If this changes to a Stripe subscription trial that automatically charges after 7 days, update:
 
