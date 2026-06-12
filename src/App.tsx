@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import {
   createCheckoutSession,
+  fetchConfig,
   fetchSession,
   logoutRemote,
   postRemoteEntry,
@@ -17,7 +18,7 @@ const STORAGE_KEY = 'dear-human-state-v2'
 const LEGACY_STORAGE_KEY = 'dear-human-state-v1'
 const TRIAL_DAYS = 7
 const MONTHLY_PRICE = 500
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim() ?? ''
+const BUILD_GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim() ?? ''
 
 type Actor = 'self' | 'partner' | 'system'
 type Language = 'ja' | 'en'
@@ -349,7 +350,7 @@ function mergeRemoteState(current: AppState, next: RemoteSession): AppState | nu
     ...current,
     accepted: true,
     email: next.user.email,
-    trialStartedAt: next.exchange?.startedAt ?? current.trialStartedAt ?? new Date().toISOString(),
+    trialStartedAt: next.user.trialStartedAt ?? next.exchange?.startedAt ?? current.trialStartedAt ?? new Date().toISOString(),
     partnerCode: next.exchange?.partnerCode ?? current.partnerCode,
     paid: next.user.subscriptionStatus === 'active',
   }
@@ -389,13 +390,15 @@ function DiaryApp() {
   const [state, setState] = useState<AppState>(loadState)
   const [draft, setDraft] = useState('')
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [googleClientId, setGoogleClientId] = useState(BUILD_GOOGLE_CLIENT_ID)
+  const [configLoaded, setConfigLoaded] = useState(Boolean(BUILD_GOOGLE_CLIENT_ID))
   const [remoteSession, setRemoteSession] = useState<RemoteSession | null>(null)
-  const [remoteLoading, setRemoteLoading] = useState(Boolean(GOOGLE_CLIENT_ID))
+  const [remoteLoading, setRemoteLoading] = useState(false)
   const [remoteError, setRemoteError] = useState('')
   const [billingLoading, setBillingLoading] = useState(false)
   const googleButtonRef = useRef<HTMLDivElement>(null)
 
-  const backendEnabled = Boolean(GOOGLE_CLIENT_ID)
+  const backendEnabled = Boolean(googleClientId)
   const language = state.language
   const t = copy[language]
   const selectedUser = testUsers.find((user) => user.id === state.testUserId) ?? testUsers[0]
@@ -408,8 +411,10 @@ function DiaryApp() {
   const todayEntry = remoteOwnEntry ?? state.entries[key]
   const elapsedDays = daysSinceStart(remoteExchange?.startedAt ?? state.trialStartedAt)
   const currentDay = remoteExchange?.dayIndex ?? Math.min(TRIAL_DAYS, elapsedDays + 1)
-  const remainingDays = remoteExchange ? daysUntil(remoteExchange.endsAt) : Math.max(0, TRIAL_DAYS - elapsedDays)
-  const expired = state.accepted && !state.paid && remainingDays <= 0
+  const trialEndsAt = remoteSession?.user?.trialEndsAt ?? remoteExchange?.endsAt ?? null
+  const remainingDays = remoteWaiting ? TRIAL_DAYS : trialEndsAt ? daysUntil(trialEndsAt) : Math.max(0, TRIAL_DAYS - elapsedDays)
+  const remoteTrialEnded = backendEnabled && remoteSession?.user?.subscriptionStatus === 'trial_ended'
+  const expired = state.accepted && !remoteWaiting && !state.paid && (remoteTrialEnded || remainingDays <= 0)
   const partnerLabel = `${t.partner} ${remoteExchange?.partnerCode ?? state.partnerCode}`
   const partnerEntries = selectedUser.partnerEntries[language]
 
@@ -424,7 +429,26 @@ function DiaryApp() {
   }, [])
 
   useEffect(() => {
-    if (!backendEnabled) return
+    let cancelled = false
+
+    fetchConfig()
+      .then((config) => {
+        if (!cancelled && config.googleClientId) setGoogleClientId(config.googleClientId)
+      })
+      .catch(() => {
+        // Runtime config is unavailable in pure static/local test mode.
+      })
+      .finally(() => {
+        if (!cancelled) setConfigLoaded(true)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!configLoaded || !backendEnabled) return
 
     let cancelled = false
     fetchSession()
@@ -442,7 +466,7 @@ function DiaryApp() {
     return () => {
       cancelled = true
     }
-  }, [applyRemoteSession, backendEnabled])
+  }, [applyRemoteSession, backendEnabled, configLoaded])
 
   useEffect(() => {
     if (!backendEnabled || remoteSession?.authenticated || !googleButtonRef.current) return
@@ -453,7 +477,7 @@ function DiaryApp() {
         if (cancelled || !googleButtonRef.current || !window.google?.accounts?.id) return
 
         window.google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
+          client_id: googleClientId,
           use_fedcm_for_prompt: true,
           callback: (response) => {
             if (!response.credential) return
@@ -485,7 +509,7 @@ function DiaryApp() {
     return () => {
       cancelled = true
     }
-  }, [applyRemoteSession, backendEnabled, remoteSession?.authenticated])
+  }, [applyRemoteSession, backendEnabled, googleClientId, remoteSession?.authenticated])
 
   const messages = useMemo<ThreadMessage[]>(() => {
     const items: ThreadMessage[] = [

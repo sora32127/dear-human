@@ -1,4 +1,13 @@
-import { buildSessionPayload, json, matchOrWait, readJson, requireSession } from '../../_shared'
+import {
+  buildSessionPayload,
+  canStartExchange,
+  getUserById,
+  json,
+  matchOrWait,
+  readJson,
+  refreshUserAccess,
+  requireSession,
+} from '../../_shared'
 import type { Env } from '../../_shared'
 
 type StartTrialRequest = {
@@ -14,7 +23,12 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     return json({ error: 'Required confirmations are missing' }, { status: 400 })
   }
 
-  await matchOrWait(env, user.id)
-  return json({ authenticated: true, ...(await buildSessionPayload(env, user)) })
-}
+  const currentUser = await refreshUserAccess(env, user)
+  if (!canStartExchange(currentUser)) {
+    return json({ error: 'The free trial has ended. Please subscribe to continue.' }, { status: 402 })
+  }
 
+  await matchOrWait(env, currentUser.id)
+  const nextUser = (await getUserById(env, currentUser.id)) ?? currentUser
+  return json({ authenticated: true, ...(await buildSessionPayload(env, nextUser)) })
+}

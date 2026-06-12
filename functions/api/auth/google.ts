@@ -6,6 +6,7 @@ type GoogleAuthRequest = {
 }
 
 type GoogleTokenInfo = {
+  iss?: string
   aud?: string
   sub?: string
   email?: string
@@ -25,13 +26,15 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
   const tokenInfo = await tokenInfoResponse.json<GoogleTokenInfo>()
   const emailVerified = tokenInfo.email_verified === true || tokenInfo.email_verified === 'true'
-  if (tokenInfo.aud !== env.GOOGLE_CLIENT_ID || !tokenInfo.sub || !tokenInfo.email || !emailVerified) {
+  const validIssuer = !tokenInfo.iss || tokenInfo.iss === 'https://accounts.google.com' || tokenInfo.iss === 'accounts.google.com'
+  if (tokenInfo.aud !== env.GOOGLE_CLIENT_ID || !validIssuer || !tokenInfo.sub || !tokenInfo.email || !emailVerified) {
     return json({ error: 'Invalid Google credential' }, { status: 401 })
   }
 
   let user = await env.DB.prepare(
     `
-      SELECT id, google_sub, email, stripe_customer_id, subscription_status, subscription_current_period_end
+      SELECT id, google_sub, email, stripe_customer_id, stripe_subscription_id,
+             subscription_status, subscription_current_period_end, trial_started_at, trial_ends_at
       FROM users
       WHERE google_sub = ?
     `,
@@ -43,8 +46,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const userId = crypto.randomUUID()
     await env.DB.prepare(
       `
-        INSERT INTO users (id, google_sub, email)
-        VALUES (?, ?, ?)
+        INSERT INTO users (id, google_sub, email, subscription_status)
+        VALUES (?, ?, ?, 'none')
       `,
     )
       .bind(userId, tokenInfo.sub, tokenInfo.email)
@@ -52,7 +55,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
     user = await env.DB.prepare(
       `
-        SELECT id, google_sub, email, stripe_customer_id, subscription_status, subscription_current_period_end
+        SELECT id, google_sub, email, stripe_customer_id, stripe_subscription_id,
+               subscription_status, subscription_current_period_end, trial_started_at, trial_ends_at
         FROM users
         WHERE id = ?
       `,
@@ -89,4 +93,3 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     },
   )
 }
-

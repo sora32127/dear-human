@@ -21,9 +21,15 @@ export type RemoteSession = {
     email: string
     subscriptionStatus: string
     subscriptionCurrentPeriodEnd: string | null
+    trialStartedAt: string | null
+    trialEndsAt: string | null
   } | null
   waiting: boolean
   exchange: RemoteExchange | null
+}
+
+export type RemoteConfig = {
+  googleClientId: string
 }
 
 async function requestJson<T>(url: string, init?: RequestInit) {
@@ -43,6 +49,10 @@ async function requestJson<T>(url: string, init?: RequestInit) {
 
 export function fetchSession() {
   return requestJson<RemoteSession>('/api/session')
+}
+
+export function fetchConfig() {
+  return requestJson<RemoteConfig>('/api/config')
 }
 
 export function signInWithGoogle(credential: string) {
@@ -77,4 +87,3 @@ export function logoutRemote() {
     method: 'POST',
   })
 }
-

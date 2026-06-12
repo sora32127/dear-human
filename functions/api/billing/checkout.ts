@@ -1,4 +1,4 @@
-import { getOrigin, json, requireSession, stripeRequest } from '../../_shared'
+import { getOrigin, isPaidSubscription, json, requireSession, stripeRequest } from '../../_shared'
 import type { Env } from '../../_shared'
 
 type StripeCustomer = {
@@ -14,6 +14,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const { user } = await requireSession(request, env)
   if (!env.STRIPE_SECRET_KEY || !env.STRIPE_PRICE_ID) {
     return json({ error: 'Stripe is not configured' }, { status: 500 })
+  }
+  if (isPaidSubscription(user.subscription_status)) {
+    return json({ error: 'Subscription is already active' }, { status: 409 })
   }
 
   let customerId = user.stripe_customer_id
@@ -51,6 +54,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       'line_items[0][quantity]': '1',
       success_url: successUrl,
       cancel_url: cancelUrl,
+      client_reference_id: user.id,
+      locale: 'auto',
       'metadata[user_id]': user.id,
       'subscription_data[metadata][user_id]': user.id,
     }),
@@ -58,4 +63,3 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
   return json({ url: session.url })
 }
-

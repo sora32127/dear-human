@@ -13,8 +13,11 @@ export type UserRecord = {
   google_sub: string
   email: string
   stripe_customer_id: string | null
+  stripe_subscription_id: string | null
   subscription_status: string
   subscription_current_period_end: string | null
+  trial_started_at: string | null
+  trial_ends_at: string | null
 }
 
 export type PairRecord = {
@@ -46,6 +49,11 @@ const SESSION_COOKIE = 'dh_session'
 const SESSION_DAYS = 30
 const TRIAL_DAYS = 7
 const PARTNER_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+const PAID_SUBSCRIPTION_STATUSES = new Set(['active'])
+const USER_COLUMNS = `
+  id, google_sub, email, stripe_customer_id, stripe_subscription_id,
+  subscription_status, subscription_current_period_end, trial_started_at, trial_ends_at
+`
 
 export function json(data: unknown, init: ResponseInit = {}) {
   return new Response(JSON.stringify(data), {
@@ -83,6 +91,21 @@ export function dayIndex(startedAt: string, now = new Date()) {
   const start = new Date(startedAt)
   const elapsed = now.getTime() - start.getTime()
   return Math.min(TRIAL_DAYS, Math.max(1, Math.floor(elapsed / 86400000) + 1))
+}
+
+export function isPaidSubscription(status: string) {
+  return PAID_SUBSCRIPTION_STATUSES.has(status)
+}
+
+export function isTrialActive(user: UserRecord, now = new Date()) {
+  if (user.subscription_status !== 'trialing' || !user.trial_ends_at) return false
+  return new Date(user.trial_ends_at).getTime() > now.getTime()
+}
+
+export function canStartExchange(user: UserRecord, now = new Date()) {
+  if (isPaidSubscription(user.subscription_status)) return true
+  if (!user.trial_started_at) return true
+  return isTrialActive(user, now)
 }
 
 export function getOrigin(request: Request) {
@@ -129,7 +152,8 @@ export async function requireSession(request: Request, env: Env): Promise<Sessio
   const user = await env.DB.prepare(
     `
       SELECT users.id, users.google_sub, users.email, users.stripe_customer_id,
-             users.subscription_status, users.subscription_current_period_end
+             users.stripe_subscription_id, users.subscription_status,
+             users.subscription_current_period_end, users.trial_started_at, users.trial_ends_at
       FROM sessions
       JOIN users ON users.id = sessions.user_id
       WHERE sessions.id = ? AND sessions.expires_at > ?
@@ -143,7 +167,46 @@ export async function requireSession(request: Request, env: Env): Promise<Sessio
   return { user, sessionId }
 }
 
+export async function getUserById(env: Env, userId: string) {
+  return env.DB.prepare(`SELECT ${USER_COLUMNS} FROM users WHERE id = ?`).bind(userId).first<UserRecord>()
+}
+
+export async function refreshUserAccess(env: Env, user: UserRecord) {
+  if (
+    user.subscription_status === 'trialing' &&
+    user.trial_ends_at &&
+    new Date(user.trial_ends_at).getTime() <= Date.now()
+  ) {
+    await env.DB.prepare(
+      `
+        UPDATE users
+        SET subscription_status = 'trial_ended',
+            updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+        WHERE id = ? AND subscription_status = 'trialing'
+      `,
+    )
+      .bind(user.id)
+      .run()
+    return { ...user, subscription_status: 'trial_ended' }
+  }
+
+  return user
+}
+
+export async function completeExpiredPairs(env: Env) {
+  await env.DB.prepare(
+    `
+      UPDATE pairs
+      SET status = 'completed'
+      WHERE status = 'active' AND ends_at <= ?
+    `,
+  )
+    .bind(nowIso())
+    .run()
+}
+
 export async function getActivePair(env: Env, userId: string) {
+  await completeExpiredPairs(env)
   return env.DB.prepare(
     `
       SELECT id, user_a_id, user_b_id, partner_code_a, partner_code_b, started_at, ends_at, status
@@ -187,20 +250,23 @@ export async function getCurrentEntryState(env: Env, pair: PairRecord, userId: s
 }
 
 export async function buildSessionPayload(env: Env, user: UserRecord) {
-  const pair = await getActivePair(env, user.id)
+  const currentUser = await refreshUserAccess(env, user)
+  const pair = await getActivePair(env, currentUser.id)
   const waiting = await env.DB.prepare('SELECT user_id FROM waiting_pool WHERE user_id = ?')
-    .bind(user.id)
+    .bind(currentUser.id)
     .first<{ user_id: string }>()
 
   return {
     user: {
-      id: user.id,
-      email: user.email,
-      subscriptionStatus: user.subscription_status,
-      subscriptionCurrentPeriodEnd: user.subscription_current_period_end,
+      id: currentUser.id,
+      email: currentUser.email,
+      subscriptionStatus: currentUser.subscription_status,
+      subscriptionCurrentPeriodEnd: currentUser.subscription_current_period_end,
+      trialStartedAt: currentUser.trial_started_at,
+      trialEndsAt: currentUser.trial_ends_at,
     },
     waiting: Boolean(waiting),
-    exchange: pair ? await getCurrentEntryState(env, pair, user.id) : null,
+    exchange: pair ? await getCurrentEntryState(env, pair, currentUser.id) : null,
   }
 }
 
@@ -239,6 +305,7 @@ export async function matchOrWait(env: Env, userId: string) {
   }
 
   const start = new Date()
+  const trialEndsAt = addDays(start, TRIAL_DAYS).toISOString()
   const pair: PairRecord = {
     id: randomId('pair'),
     user_a_id: waitingUser.user_id,
@@ -246,7 +313,7 @@ export async function matchOrWait(env: Env, userId: string) {
     partner_code_a: generatePartnerCode(),
     partner_code_b: generatePartnerCode(),
     started_at: start.toISOString(),
-    ends_at: addDays(start, TRIAL_DAYS).toISOString(),
+    ends_at: trialEndsAt,
     status: 'active',
   }
 
@@ -268,6 +335,19 @@ export async function matchOrWait(env: Env, userId: string) {
       pair.ends_at,
       pair.status,
     ),
+    env.DB.prepare(
+      `
+        UPDATE users
+        SET trial_started_at = COALESCE(trial_started_at, ?),
+            trial_ends_at = COALESCE(trial_ends_at, ?),
+            subscription_status = CASE
+              WHEN subscription_status = 'none' AND trial_started_at IS NULL THEN 'trialing'
+              ELSE subscription_status
+            END,
+            updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+        WHERE id IN (?, ?)
+      `,
+    ).bind(pair.started_at, pair.ends_at, pair.user_a_id, pair.user_b_id),
   ])
 
   return { status: 'matched' as const, pair }
@@ -319,4 +399,3 @@ export async function verifyStripeSignature(rawBody: string, signatureHeader: st
   }
   return diff === 0
 }
-

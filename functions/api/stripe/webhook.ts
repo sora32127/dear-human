@@ -36,17 +36,34 @@ async function updateSubscriptionByUser(env: Env, userId: string, status: string
     .run()
 }
 
-async function updateSubscriptionByCustomer(env: Env, customerId: string, status: string, periodEnd: string | null) {
+async function updateSubscriptionByLookup(
+  env: Env,
+  lookup: { customerId?: string | null; subscriptionId?: string | null },
+  status: string,
+  periodEnd: string | null,
+) {
+  const clauses: string[] = []
+  const values: string[] = []
+  if (lookup.subscriptionId) {
+    clauses.push('stripe_subscription_id = ?')
+    values.push(lookup.subscriptionId)
+  }
+  if (lookup.customerId) {
+    clauses.push('stripe_customer_id = ?')
+    values.push(lookup.customerId)
+  }
+  if (clauses.length === 0) return
+
   await env.DB.prepare(
     `
       UPDATE users
       SET subscription_status = ?,
           subscription_current_period_end = ?,
           updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-      WHERE stripe_customer_id = ?
+      WHERE ${clauses.join(' OR ')}
     `,
   )
-    .bind(status, periodEnd, customerId)
+    .bind(status, periodEnd, ...values)
     .run()
 }
 
@@ -63,34 +80,53 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   if (event.type === 'checkout.session.completed') {
     const userId = metadataUserId(object)
     const customerId = stringValue(object.customer)
+    const subscriptionId = stringValue(object.subscription)
     if (userId && customerId) {
       await env.DB.prepare(
         `
           UPDATE users
           SET stripe_customer_id = ?,
+              stripe_subscription_id = ?,
               subscription_status = 'active',
               updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
           WHERE id = ?
         `,
       )
-        .bind(customerId, userId)
+        .bind(customerId, subscriptionId, userId)
         .run()
     }
   }
 
-  if (event.type === 'customer.subscription.updated' || event.type === 'customer.subscription.deleted') {
+  if (
+    event.type === 'customer.subscription.created' ||
+    event.type === 'customer.subscription.updated' ||
+    event.type === 'customer.subscription.deleted'
+  ) {
     const status = event.type === 'customer.subscription.deleted' ? 'canceled' : stringValue(object.status) || 'unknown'
     const periodEnd = numberToIso(object.current_period_end)
     const userId = metadataUserId(object)
     const customerId = stringValue(object.customer)
+    const subscriptionId = stringValue(object.id)
 
     if (userId) {
       await updateSubscriptionByUser(env, userId, status, periodEnd)
-    } else if (customerId) {
-      await updateSubscriptionByCustomer(env, customerId, status, periodEnd)
+      if (customerId || subscriptionId) {
+        await env.DB.prepare(
+          `
+            UPDATE users
+            SET stripe_customer_id = COALESCE(?, stripe_customer_id),
+                stripe_subscription_id = COALESCE(?, stripe_subscription_id),
+                updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+            WHERE id = ?
+          `,
+        )
+          .bind(customerId, subscriptionId, userId)
+          .run()
+      }
+    } else {
+      await updateSubscriptionByLookup(env, { customerId, subscriptionId }, status, periodEnd)
     }
   }
 
   return json({ received: true })
 }
-

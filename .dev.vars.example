@@ -1,4 +1,6 @@
 GOOGLE_CLIENT_ID=
+# Optional legacy Vite fallback for local static-only development.
+VITE_GOOGLE_CLIENT_ID=
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
 STRIPE_PRICE_ID=
