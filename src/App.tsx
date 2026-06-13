@@ -9,6 +9,7 @@ import {
   logoutRemote,
   postRemoteEntry,
   signInWithGoogle,
+  startRemoteExchange,
   startRemoteTrial,
 } from './api'
 import AlgorithmLab, { MatchingFlowPreview } from './AlgorithmLab'
@@ -81,6 +82,10 @@ const copy = {
     posted: '投稿が終わりました。今日はもう投稿できません。',
     waitingTitle: '相手を待っています',
     waitingText: '今はプールに入りました。次の参加者が来ると、7日間の交換が始まります。',
+    nextExchangeTitle: '次の7日間を始める',
+    nextExchangeText: '前の交換は終わりました。次の相手を待つと、新しい7日間が始まります。',
+    startNextExchange: '次の相手を待つ',
+    startNextError: '次の交換を始められませんでした。時間を置いてもう一度試してください。',
     partnerPending: '相手の日記はまだ届いていません。',
     lockedPreview: '相手の日記は届いています。あなたが送ると読めます。',
     self: 'あなた',
@@ -135,6 +140,10 @@ const copy = {
     posted: 'Your diary has been posted. You cannot post again today.',
     waitingTitle: 'Waiting for a partner',
     waitingText: 'You are in the pool. When the next person joins, your 7-day exchange starts.',
+    nextExchangeTitle: 'Start the next 7 days',
+    nextExchangeText: 'The previous exchange has ended. Wait for the next person to start a new 7-day exchange.',
+    startNextExchange: 'Wait for the next person',
+    startNextError: 'Could not start the next exchange. Please try again later.',
     partnerPending: 'Your partner has not posted today yet.',
     lockedPreview: 'Your partner posted today. Send yours to read it.',
     self: 'You',
@@ -708,6 +717,21 @@ function DiaryApp() {
     }
   }
 
+  async function startNextExchange() {
+    if (!backendEnabled) return
+
+    setRemoteLoading(true)
+    setRemoteError('')
+    try {
+      const next = await startRemoteExchange()
+      applyRemoteSession(next)
+    } catch {
+      setRemoteError(t.startNextError as string)
+    } finally {
+      setRemoteLoading(false)
+    }
+  }
+
   async function logout() {
     if (backendEnabled) {
       await logoutRemote()
@@ -803,6 +827,17 @@ function DiaryApp() {
     )
   }
 
+  if (backendEnabled && state.accepted && configLoaded && !remoteSession) {
+    return (
+      <main className="grid min-h-dvh place-items-center bg-black px-5 text-white">
+        <section className="w-full max-w-[520px] space-y-5">
+          <h1 className="font-serif text-3xl leading-tight">{t.appName}</h1>
+          <p className="text-sm leading-7 text-zinc-400">Loading...</p>
+        </section>
+      </main>
+    )
+  }
+
   if (state.ended || state.interrupted || expired) {
     const title = expired ? t.trialEnded : state.interrupted ? t.interrupted : t.finished
 
@@ -828,6 +863,40 @@ function DiaryApp() {
               type="button"
             >
               {t.deleteData}
+            </button>
+          </div>
+        </section>
+      </main>
+    )
+  }
+
+  if (backendEnabled && state.accepted && remoteSession?.authenticated && !remoteWaiting && !remoteExchange) {
+    return (
+      <main className="grid min-h-dvh place-items-center bg-black px-5 text-white">
+        <section className="w-full max-w-[520px] space-y-5">
+          <h1 className="font-serif text-3xl leading-tight">{t.nextExchangeTitle}</h1>
+          <p className="text-sm leading-7 text-zinc-400">{t.nextExchangeText}</p>
+          {remoteError ? <p className="text-xs leading-6 text-zinc-400">{remoteError}</p> : null}
+          {remoteSession.user ? (
+            <p className="text-xs text-zinc-600">
+              {t.signedInAs}: {remoteSession.user.email}
+            </p>
+          ) : null}
+          <div className="flex flex-wrap gap-2">
+            <button
+              className="h-11 rounded-full bg-white px-5 text-sm font-semibold text-black disabled:bg-zinc-800 disabled:text-zinc-500"
+              disabled={remoteLoading}
+              onClick={() => void startNextExchange()}
+              type="button"
+            >
+              {t.startNextExchange}
+            </button>
+            <button
+              className="h-11 rounded-full border border-white px-5 text-sm"
+              onClick={() => void logout()}
+              type="button"
+            >
+              {t.logout}
             </button>
           </div>
         </section>

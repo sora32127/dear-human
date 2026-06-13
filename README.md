@@ -28,6 +28,7 @@ AIではなく人間と日記を交換しよう。
 - Test users selectable from the settings sheet
 - Google sign-in when `GOOGLE_CLIENT_ID` is configured
 - D1-backed waiting pool, pairs, and diary entries
+- Users can return to the shared pool for the next 7-day exchange after a pair ends
 - Stripe Checkout endpoint for the ¥500/month subscription
 - Legal pages for terms, privacy policy, and 特定商取引法に基づく表記
 

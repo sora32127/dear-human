@@ -69,6 +69,12 @@ export function startRemoteTrial(confirmations: { age: boolean; safety: boolean;
   })
 }
 
+export function startRemoteExchange() {
+  return requestJson<RemoteSession>('/api/exchange/start', {
+    method: 'POST',
+  })
+}
+
 export function postRemoteEntry(body: string) {
   return requestJson<RemoteSession>('/api/entries', {
     method: 'POST',
