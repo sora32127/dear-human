@@ -469,7 +469,7 @@ function DiaryApp() {
   }, [applyRemoteSession, backendEnabled, configLoaded])
 
   useEffect(() => {
-    if (!backendEnabled || remoteSession?.authenticated || !googleButtonRef.current) return
+    if (state.accepted || !backendEnabled || remoteSession?.authenticated || !googleButtonRef.current) return
 
     let cancelled = false
     loadGoogleScript()
@@ -509,7 +509,7 @@ function DiaryApp() {
     return () => {
       cancelled = true
     }
-  }, [applyRemoteSession, backendEnabled, googleClientId, remoteSession?.authenticated])
+  }, [applyRemoteSession, backendEnabled, googleClientId, remoteSession?.authenticated, state.accepted])
 
   const messages = useMemo<ThreadMessage[]>(() => {
     const items: ThreadMessage[] = [
