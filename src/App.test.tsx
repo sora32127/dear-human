@@ -69,6 +69,31 @@ describe('Dear Human MVP', () => {
     expect(screen.getByText('月500円')).toBeInTheDocument()
   })
 
+  it('shows billing management for paid users in the settings sheet', async () => {
+    const user = userEvent.setup()
+    window.localStorage.setItem(
+      'dear-human-state-v2',
+      JSON.stringify({
+        accepted: true,
+        email: 'paid@example.com',
+        trialStartedAt: new Date().toISOString(),
+        paid: true,
+        ended: false,
+        interrupted: false,
+        entries: {},
+        language: 'ja',
+        partnerCode: 'ABCDE',
+        testUserId: 'night-writer',
+      }),
+    )
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: '設定' }))
+
+    expect(screen.getByRole('button', { name: '課金管理' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '続ける' })).not.toBeInTheDocument()
+  })
+
   it('switches between Japanese and English copy', async () => {
     const user = userEvent.setup()
     render(<App />)

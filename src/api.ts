@@ -82,6 +82,12 @@ export function createCheckoutSession() {
   })
 }
 
+export function createBillingPortalSession() {
+  return requestJson<{ url: string }>('/api/billing/portal', {
+    method: 'POST',
+  })
+}
+
 export function logoutRemote() {
   return requestJson<{ ok: true }>('/api/auth/logout', {
     method: 'POST',

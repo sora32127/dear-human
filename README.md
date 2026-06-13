@@ -92,12 +92,14 @@ wrangler pages secret put STRIPE_WEBHOOK_SECRET --project-name dear-human
 wrangler pages secret put STRIPE_PRICE_ID --project-name dear-human
 wrangler pages secret put STRIPE_SUCCESS_URL --project-name dear-human
 wrangler pages secret put STRIPE_CANCEL_URL --project-name dear-human
+wrangler pages secret put STRIPE_PORTAL_RETURN_URL --project-name dear-human
 ```
 
 Use these redirect values:
 
 - `STRIPE_SUCCESS_URL=https://dear-human.net/billing/success`
 - `STRIPE_CANCEL_URL=https://dear-human.net/billing/cancel`
+- `STRIPE_PORTAL_RETURN_URL=https://dear-human.net/`
 
 ## Legal Launch Notes
 
@@ -137,6 +139,7 @@ Required production configuration:
 - `STRIPE_PRICE_ID`: recurring monthly price ID for ¥500/month.
 - `STRIPE_SUCCESS_URL`: Checkout success redirect, normally `https://dear-human.net/billing/success`.
 - `STRIPE_CANCEL_URL`: Checkout cancel redirect, normally `https://dear-human.net/billing/cancel`.
+- `STRIPE_PORTAL_RETURN_URL`: Customer Portal return URL, normally `https://dear-human.net/`.
 
 The D1 database binding is `DB`; migrations live in `migrations/`.
 

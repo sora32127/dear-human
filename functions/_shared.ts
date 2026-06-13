@@ -6,6 +6,7 @@ export type Env = {
   STRIPE_PRICE_ID: string
   STRIPE_SUCCESS_URL?: string
   STRIPE_CANCEL_URL?: string
+  STRIPE_PORTAL_RETURN_URL?: string
 }
 
 export type UserRecord = {

@@ -2,6 +2,7 @@ import { MoreHorizontal, RotateCcw, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import {
+  createBillingPortalSession,
   createCheckoutSession,
   fetchConfig,
   fetchSession,
@@ -101,6 +102,7 @@ const copy = {
     price: `月${MONTHLY_PRICE}円`,
     billingNote: '年額、上位プラン、使用量制限はありません。課金前に確認画面を表示します。',
     billingError: '決済画面を開けませんでした。時間を置いてもう一度試してください。',
+    manageBilling: '課金管理',
     testUsers: 'テストユーザー',
     active: '使用中',
     continue: '続ける',
@@ -154,6 +156,7 @@ const copy = {
     price: `¥${MONTHLY_PRICE}/month`,
     billingNote: 'There is no annual plan, premium tier, or usage limit. A confirmation screen appears before payment.',
     billingError: 'Could not open checkout. Please try again later.',
+    manageBilling: 'Manage billing',
     testUsers: 'Test users',
     active: 'Active',
     continue: 'Continue',
@@ -691,6 +694,20 @@ function DiaryApp() {
     }
   }
 
+  async function openBillingPortal() {
+    if (!backendEnabled || !state.paid) return
+
+    setBillingLoading(true)
+    setRemoteError('')
+    try {
+      const session = await createBillingPortalSession()
+      window.location.assign(session.url)
+    } catch {
+      setRemoteError(t.billingError)
+      setBillingLoading(false)
+    }
+  }
+
   async function logout() {
     if (backendEnabled) {
       await logoutRemote()
@@ -912,6 +929,7 @@ function DiaryApp() {
           onLanguageChange={setLanguage}
           onLogout={logout}
           onPay={openCheckout}
+          onManageBilling={openBillingPortal}
           onReset={resetAll}
           onSwitchUser={switchTestUser}
           paid={state.paid}
@@ -1017,6 +1035,7 @@ function SettingsSheet({
   onInterrupt,
   onLanguageChange,
   onLogout,
+  onManageBilling,
   onPay,
   onReset,
   onSwitchUser,
@@ -1035,6 +1054,7 @@ function SettingsSheet({
   onInterrupt: () => void
   onLanguageChange: (language: Language) => void
   onLogout: () => void | Promise<void>
+  onManageBilling: () => void | Promise<void>
   onPay: () => void | Promise<void>
   onReset: () => void
   onSwitchUser: (testUserId: string) => void
@@ -1116,7 +1136,16 @@ function SettingsSheet({
               >
                 {t.continue}
               </button>
-            ) : null}
+            ) : (
+              <button
+                className="h-10 rounded-full bg-white px-3 text-xs font-semibold text-black disabled:bg-zinc-800 disabled:text-zinc-500"
+                disabled={billingLoading}
+                onClick={() => void onManageBilling()}
+                type="button"
+              >
+                {t.manageBilling}
+              </button>
+            )}
             <button className="h-10 rounded-full border border-zinc-700 px-3 text-xs" onClick={onEnd} type="button">
               {t.finishExchange}
             </button>
